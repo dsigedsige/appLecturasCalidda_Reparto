@@ -1,0 +1,243 @@
+// opcion todos del combo --- where con case when
+		  AND a.id_Operario_Reparto = CASE WHEN @id_operario > 0 THEN @id_operario ELSE  a.id_Operario_Reparto END   
+
+
+        <META HTTP-EQUIV="Refresh" CONTENT="3;URL='Content/img/1047.gif'">
+
+INFINTO SCROLL
+inspecciones mantenimiento de personal
+
+
+// JSPDF ----
+belcen --- pedidos --- alinear
+
+// MODIFICANDO LA ESTRUCTURTA DE UNA TABLA
+ ALTER TABLE Tbl_Com_Facturas_Cancelacion_Cab ALTER COLUMN pago_factura DECIMAL (28,6) ;  
+
+//RENOMBRANDO EL NOMBRE DE UNA COLUMNA
+
+EXEC sp_rename 'tbl_Alm_serie_guia.id_tipo_pedido', 'id_Alm_TipoSolicitud', 'COLUMN';  
+
+// BUSCANDO UNA TABLA EN QUE PROCEDIMIENTOS ALMACENADO  ESTA 
+SELECT Name FROM sys.procedures WHERE OBJECT_DEFINITION(OBJECT_ID) LIKE '%tbl_zona%'
+
+
+http://veopartidos.com
+
+//Graficos en Web ---HighCharts
+
+https://www.youtube.com/watch?v=Q-wfezcht7c
+
+http://jsfiddle.net/V3gMT/299/
+
+
+https://stackoverflow.com/questions/26088925/request-entity-too-large-google-map-directions-error-413
+
+
+https://stackoverflow.com/questions/45493234/jspdf-not-allowed-to-navigate-top-frame-to-data-url
+
+// COMBO BUSCADOR Y MODAL 
+  liquidaciones - programacion de  Obras
+
+// modal
+https://coolestguidesontheplanet.com/bootstrap/modal.php#myModal2
+
+//enfocar TAB CONTROL  -- Programacion de liquidaciones
+
+https://stackoverflow.com/questions/17830590/bootstrap-tab-activation-with-jquery
+
+// inmovilizar columnas tabla
+
+https://stackoverflow.com/questions/14977864/fixed-header-table-with-horizontal-scrollbar-and-vertical-scrollbar-on
+
+ Sistema escritorio  pass : GAELLE
+Password: Y69qS=?t#Z
+
+// iconos png
+http://icon-icons.com/es/
+
+importar archivo csv a sql server
+http://devtroce.com/2010/04/24/importar-datos-de-un-fichero-csv-en-sql-server/
+
+//SOCKET IO
+https://carlosazaustre.es/blog/websockets-como-utilizar-socket-io-en-tu-aplicacion-web/
+
+// FORMATOS DE FECCHA SQL
+http://teknolosys.com/2011/09/convertir-fecha-a-char-en-varios-formatos-con-sql/
+
+// centrar div
+https://escss.blogspot.com/2012/05/centrando-al-centro-con-css-16-maneras.html
+Bootstrap: class="well"
+
+// crear instalador de aplicacion c#
+INSTALLSHIELD: Instalación y creación de un instalador de un proyecto de Visual Studio NET 2012
+
+https://www.uno-de-piera.com/aplicacion-con-phonegap-angularjs-y-sqlite/
+
+//color de fondo EPPlus excel
+http://www.flounder.com/csharp_color_table.htm
+
+
+SALIR MERGE GIT
+escape : x para salir del comentario de Merge 
+
+// FACTURACION
+http://www.cobraperu.com/VentasOnline#/Login
+
+//ALMACEN
+http://cobra-sistemas.sytes.net:9500/Proyecto/
+
+//CAM PERU
+http://179.43.80.196/Comercial#/Login
+http://dsige.camperu.com.pe:8086/comercial#/Home
+http://dsige.camperu.com.pe:8086/GestionAlmacen#/Home
+
+http://www.dsige.com/WebFacturacion#/Login
+
+//generador de botones 
+http://bootsnipp.com/buttons
+
+
+//CLAVE GOOGLE MAPS
+google maps : clave  AIzaSyCNifW4-xM4ihZmY_C69w8HCSgCCEplM_8
+
+//CLAVE GOOGLE MAPS STATIC
+&key=AIzaSyApCbyiYKJMvWG_w-X856LA_OFuX8ZUKXA
+
+
+//idioma del sql
+SET LANGUAGE Spanish;
+SELECT DATENAME(MONTH, @Today) AS 'Month Name';
+
+
+//Iconos para google maps 
+https://developers.google.com/maps/documentation/javascript/symbols?hl=es-419
+ 
+iconos
+http://www.flaticon.com/
+
+http://www.phonegapspain.com/topic/google-maps-y-calculo-de-distancia-entre-dos-puntos-geograficos/
+
+
+https://developers.google.com/maps/documentation/javascript/examples/directions-draggable?hl=es-419
+ 
+// mensaje de presion de Geolocalizacion 
+
+https://norfipc.com/internet/saber-mi-localizacion-ubicacion-geografica.php
+
+
+CODIGO PARA CUANDO SE ESTA TRANFERIENDO ARCHIVOS POR ESCRITORIO REMOTO Y SALE UN ERROR Y SE QUEDA TRANSFIRIENDO
+
+Si copiar y pegar está habilitado tanto en el servidor y la conexión a escritorio remoto, 
+pero aún así no funciona, el siguiente me funciona 
+(tomado de remote-desktop-connection-whats-wrong/" rel="nofollow" target="_blank">aquí):
+
+Haga lo siguiente en el equipo remoto:
+
+La carga de la tarea del administrador 
+(clic derecho en la barra de tareas y seleccione Administrador de Tareas)
+
+Ir a la Pestaña Procesos
+Seleccione rdpclip.exe
+Haga Clic En Finalizar Proceso
+
+Vaya a la Pestaña Aplicación de
+Haga Clic En Nuevo Proceso
+Tipo de rdpclip
+Haga Clic En Aceptar
+
+
+---Buscar en dónde se utiliza una tabla ssql
+SELECT Name FROM sys.procedures WHERE OBJECT_DEFINITION(OBJECT_ID) LIKE '%Historico_Lectura%'
+
+
+Fuente: https://www.enmimaquinafunciona.com/pregunta/16724/no-se-puede-copiar-y-pegar-entre-mi-escritorio-a-escritorio-remoto
+
+
+
+http://techbrij.com/export-excel-xls-xlsx-asp-net-npoi-epplus
+
+
+
+// postura
+
+https://www.youtube.com/watch?v=0ezUylQTIx8
+
+
+// BOOTSTRAP DATATABLE  LUZ DEL SUR Index_ReporteDiario
+
+                $scope.Obj_List_Detalle = [];
+
+                if (oTable == null) {
+                    $scope.Obj_List_Detalle = data;
+                } else {
+                    oTable.destroy();
+                    oTable = null;
+                    $scope.Obj_List_Detalle = data;
+                }
+ 
+-----opcion 2 
+
+          $('.sige-load').hide();
+                    if (oTable == null) {
+                        $scope.ListaResumen_Observacion = data;
+                    } else {
+                        oTable.clear();
+                        oTable.destroy();
+                        oTable = null;
+                        $scope.ListaResumen_Observacion = data;
+                    }
+
+
+
+PARA JSPDF 
+PROYECTO DE FACTURACION O PROYECTO DE BELCEM---
+
+TAB CONTROL CON MODAL Y BOOTSTRAP
+
+http://www.cobraperu.com/inspecciones#/BandejaAtencionInspecciones
+
+FORMATEAR EXCEL EPPLUS
+
+                        oWs.Cells[_fila, 18].Style.Numberformat.Format = "#,##0.00";
+                        oWs.Cells[_fila, 18].Value = Math.Round(Convert.ToDecimal(oBj["Cantidad"]), 2);
+
+
+
+
+
+ 
+ SELECT TOP 1     
+ FLOOR(RAND()*(99-1)+1) as total_asignados,  
+ FLOOR(RAND()*(99-1)+1) as pendientes,  
+ FLOOR(RAND()*(99-1)+1) as efectivos,  
+ FLOOR(RAND()*(99-1)+1) as porc_efectivos,  
+ FLOOR(RAND()*(99-1)+1) as no_efectivos,  
+ FLOOR(RAND()*(99-1)+1) as porc_no_efectivos  
+ 
+CONDICIONAL EN UNA SOLO LINEA
+
+                                obj_entidad.porcentaje = string.IsNullOrEmpty(Fila["porcentaje"].ToString()) ? obj_entidad.porcentaje = null : Convert.ToDecimal(Fila["porcentaje"].ToString()).ToString("#,##0.00");
+
+
+
+POST DOBLE WEB API
+        [HttpPost]
+        [Route("api/BandejaAtencion/get_relacionInspecciones")]
+        public object get_relacionInspecciones(Inspecciones_E obj)
+        {
+            object resultado = null;
+            try
+            {
+                BandejaAtencionInspeccion_BL obj_negocio = new BandejaAtencionInspeccion_BL();
+                resultado = obj_negocio.Listando_Listado_Inspecccion_Cabecera_new(obj.id_personal, obj.id_pais, obj.id_grupo, obj.idDelegacion, obj.idInspector, obj.idRespCorreccion, obj.opcion, obj.fecha_Ini, obj.fecha_fin);
+            }
+            catch (Exception ex)
+            {
+                resultado = ex.Message;
+            }
+            return resultado;
+
+        }
+
+

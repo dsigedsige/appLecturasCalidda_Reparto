@@ -1,0 +1,334 @@
+﻿@using DSIGE
+@using DSIGE.Modelo
+@using DSIGE.Negocio
+
+@{
+    List<Sesion_Modulo> oSe = new List<Sesion_Modulo>();
+    
+    if (Session["Session_Usuario_Acceso"] == null)
+    {
+        Response.Redirect("../Login/Login");
+    }else{
+        oSe = ((Sesion)Session["Session_Usuario_Acceso"]).modulo;
+    }
+
+    int cuenta = 1;
+    
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewBag.Title</title>
+    @Styles.Render("~/Content/bootstrap/css/bootstrap.min.css")
+    @Styles.Render("~/Content/bootstrap/css/bootstrap-theme.min.css")
+    @Styles.Render("~/Content/font-awesome/css/font-awesome.min.css")
+    @Styles.Render("~/Content/pnotify/css/pnotify.custom.min.css")
+    @Styles.Render("~/Content/style.css")
+    @Styles.Render("~/Content/combobox/select2.css")
+
+
+    @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery-1.12.0.min.js")
+    @Scripts.Render("~/Content/bootstrap/js/bootstrap.min.js")
+    @Scripts.Render("~/Content/pnotify/js/pnotify.custom.min.js")
+
+    @Scripts.Render("~/Content/combobox/select2.min.js")
+
+    <script async defer
+            @*src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB46M5tvv5gb8JlAy0XLQl4XWVwZQUtCa4&libraries=geometry&sensor=false">*@
+             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAPu53t6NQF2Leb3ieMFMLbrVPv9wJZ6UE&libraries=geometry&sensor=false">
+    </script>
+
+
+    <style type="text/css">
+        body {
+            font-size: 11.5px;
+            font-family: sans-serif;
+            color: #4D4D4D;
+        }
+
+        .container {
+            width: 100%;
+            padding: 15px;
+        }
+
+        .navbar {
+            min-height: 39px;
+            padding-right: 15px;
+            margin-bottom: 0;
+        }
+
+        .navbar-brand {
+            height: 0;
+            padding: 10px 10px;
+        }
+
+        .navbar-nav > li > a {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        div#nav-principal {
+            margin-bottom: 0;
+            border: none;
+        }
+
+        .dropdown-menu {
+            font-size: 11.5px;
+            left: auto;
+            right: 0px;
+        }
+
+        .navbar-toggle {
+            padding: 5px 5px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        .dropdown-menu > li > a {
+            white-space: normal;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        .h1, .h2, .h3, .h4, .h5, .h6 {
+            /*font-size: inherit;*/
+            margin-top: 0;
+            margin-bottom: 0;
+            /*text-shadow: #f8f8f8 -1px 1px 0.1em;
+            text-shadow: -1px 1px 0.1em rgba(0, 0, 0, 0.5);*/
+        }
+
+        .form-group {
+            margin-bottom: 7px;
+        }
+
+        .form-control {
+            /*border-radius: 0 !important;*/
+            box-shadow: none;
+        }
+
+        fieldset.fieldset-border {
+            border: 1px groove #34495e !important;
+            padding: 0 1.4em 1.4em 1.4em !important;
+            /* margin: 0 0 1.5em 0 !important;*/
+            -webkit-box-shadow: 0px 0px 0px 0px #000;
+            box-shadow: 0px 0px 0px 0px #000;
+            border-radius: 3px;
+        }
+
+        .thumbnail {
+            margin-bottom: 5px !important;
+        }
+
+        legend {
+            margin-bottom: 5px;
+            border-width: 0;
+            padding: 0 10px;
+            font-size: 13px;
+            font-weight: bold;
+            width: auto;
+        }
+
+        .fixed-table-container {
+            border-top-left-radius: 0 !important;
+            border-top-right-radius: 0 !important;
+        }
+
+        /*Panel*/
+        .panel-heading,
+        .modal-header {
+            padding: 10px 15px;
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+        }
+
+        .panel-body {
+            padding: 10px;
+        }
+
+        .panel-oscuro {
+            border-color: #34495e;
+        }
+
+            .panel-oscuro > .panel-heading {
+                color: #fff;
+                background-color: #34495e;
+                border-color: #34495e;
+            }
+
+        /*JQuery Upload*/
+        .ajax-file-upload {
+            text-align: center;
+        }
+
+        .ajax-upload-dragdrop {
+            color: #FFF;
+            padding: 5px 10px;
+            font-size: inherit;
+            background-image: linear-gradient(to bottom, #337AB7 0px, #265A88 100%);
+            background-repeat: repeat-x;
+            border-color: #245580;
+            text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
+            box-shadow: 0px 1px 0px rgba(255, 255, 255, 0.15) inset, 0px 1px 1px rgba(0, 0, 0, 0.075);
+            border: 1px solid #265A88;
+            border-radius: 4px;
+        }
+
+        .label-orange {
+            background-color: #EFA131;
+        }
+    </style>
+
+    <script>
+        function fnIsNumeric(__e) {
+            var charCode = (__e.which) ? __e.which : event.keyCode
+            if (charCode > 31 && (charCode < 48 || charCode > 57))
+                return false;
+            return true;
+        }
+
+        function $ajaxUpload($url, $data, $success) {
+            $.ajax({
+                beforeSend: function (__b) {
+                    $('.sige-load').show();
+                },
+                url: $url,
+                type: 'POST',
+                data: $data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                dataType: 'json',
+                //contentType: 'multipart/form-data',
+                success: function (__s) {
+                    $success(__s);
+                },
+                complete: function () {
+                    $('.sige-load').hide();
+                },
+                error: function (__e) {
+                    console.error(__e);
+
+                    $('.sige-load').hide();
+
+                    new PNotify({
+                        title: 'Error',
+                        text: 'Comuniquese con el administrador.',
+                        type: 'error'
+                    });
+                }
+            });
+        };
+
+
+        function $ajaxJson($url, $data, $success) {
+            $.ajax({
+                beforeSend: function (__b) {
+                    $('.sige-load').show();
+                },
+                url: $url,
+                type: 'POST',
+                dataType: 'json',
+                data: $data(),
+                success: function (__s) {
+                    $success(__s);
+                },
+                complete: function () {
+                    $('.sige-load').hide();
+                },
+                error: function (__e) {
+                    console.error(__e);
+
+                    $('.sige-load').hide();
+
+                    new PNotify({
+                        title: 'Error',
+                        text: 'Comuniquese con el administrador.',
+                        type: 'error'
+                    });
+                }
+            });
+        };
+
+    </script>
+
+    @RenderSection("instances", required: false)
+    @RenderSection("scripts", required: false)
+    @RenderSection("styles", required: false)
+</head>
+<body>
+    <nav class="navbar navbar-inverse navbar-static-top panel-primary">
+        <div class="navbar-header" >
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nav-principal" aria-expanded="false" aria-controls="navbar">
+                <i class="fa fa-bars fa-lg"></i>
+            </button>
+            <a class="navbar-brand" href="javascript:">Cobra Perú S.A.</a>
+        </div>
+        <div aria-expanded="false" id="nav-principal" class="navbar-collapse collapse">
+            <ul class="nav navbar-nav navbar-right">
+                @foreach(Sesion_Modulo oMo in oSe){
+                    if(oMo.mod_id != 0){
+                    <li class="dropdown" style="width:150px;">
+                        <a href="javascript:" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                            <span>@oMo.mod_descripcion.ToUpper() <i class="fa fa-caret-down"></i></span>
+                        </a>
+                        <ul class="dropdown-menu col-md-6" role="menu" style="width:350px;">
+                            @foreach(Sesion_Item oIt in oMo.item){
+                                
+                                <li><a href="@oIt.dop_url"> @oIt.dop_descripcion.ToUpper()<i class="pull-right @oIt.urlImagen"></i></a></li>
+                            }
+                        </ul>
+                    </li>
+                    }
+                }
+ 
+                <li class="dropdown">
+
+                    <a href="javascript:" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+                        <img src="~/Content/foto/foto.png" alt="Usuario" style="margin-top: -5px; width: 18px; height: 18px;" />
+                        @foreach (Sesion_Modulo oMo in oSe)
+                        {
+                            if (cuenta == 1)
+                            {
+                                <span>@oMo.nombre_usuario.ToUpper()<i class="fa fa-caret-down"></i></span>
+                                cuenta++;
+                            }
+                        }
+
+                    </a>
+             
+                    <ul class="dropdown-menu" role="menu">
+                        <li><a href="~/Usuario/Perfil">PERFIL<i class="pull-right fa fa-user"></i></a></li>
+                        @*<li><a href="javascript:">CUENTA<i class="pull-right fa fa-cog"></i></a></li>*@
+                        <li><a href="~/Login/Logout">CERRAR SESION<i class="pull-right fa fa-sign-out"></i></a></li>
+                        @*<li class="divider"></li>
+                        <li><a href="~/Login/Logout">Cerrar Sesion</a></li>*@
+                    </ul>
+                </li>
+                @*<li>
+                    <a href="~/Login/Logout" role="button" aria-expanded="false">
+                        CERRAR SESION <i class="fa fa-sign-out"></i>
+                    </a>
+                </li>*@
+                @*<li>
+                    <a href="~/Login/Logout" role="button" aria-expanded="false">
+                        ADMINISTRACIÓN DE USUARIOS<i class="fa fa-sign-out"></i>
+                    </a>
+                </li>*@
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        @RenderBody()
+    </div>
+    <div class="sige-load" role="dialog" style=" color: #fff; width: 100%; height: 100%; position: absolute; background-color: black;top: 0px; left: 0px; z-index: 2000; opacity: 0.6; display: none; ">
+        <div style=" margin: auto 47%; top: -25%; padding-top: 25%; ">
+            <i style=" margin: auto 15%; " class="fa fa-spinner fa-pulse fa-3x fa-fw"></i>
+            <h5>Cargando...</h5>
+        </div>
+    </div>
+</body>
+</html>

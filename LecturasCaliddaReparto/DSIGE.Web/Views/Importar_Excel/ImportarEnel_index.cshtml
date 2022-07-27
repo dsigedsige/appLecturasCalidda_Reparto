@@ -1,0 +1,624 @@
+﻿@{
+    ViewBag.Title = "Importar Enel";
+    Layout = "~/Views/Shared/_LayoutPrincipal.cshtml";
+}
+
+@using DSIGE
+@using DSIGE.Modelo
+@using DSIGE.Negocio
+
+@{
+    ViewBag.Title = ".:: Importacion de archivos ::.";
+    Layout = "~/Views/Shared/_LayoutPrincipal.cshtml";
+}
+
+@section instances{
+     @Styles.Render("~/Content/dataTables-bootstrap/css/dataTables.bootstrap.min.css")
+    @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery.dataTables.min.js")
+    @Scripts.Render("~/Content/dataTables-bootstrap/js/dataTables.bootstrap.min.js")
+
+    @Styles.Render("~/Content/bootstrap-datepicker/css/bootstrap-datepicker.min.css")
+    @Scripts.Render("~/Content/bootstrap-datepicker/js/bootstrap-datepicker.min.js")
+    @Scripts.Render("~/Content/bootstrap-datepicker/locales/bootstrap-datepicker.es.min.js")
+
+    @Scripts.Render("~/Content/bootstrap/js/bootstrap-filestyle.min.js")
+    @Scripts.Render("~/Scripts/jquery.fileDownload.js")
+    @Scripts.Render("~/Content/angular/angular.js")
+    <script src="~/Content/pdf/jspdf.js"></script>
+
+}
+
+@section styles{
+    <style type="text/css">
+        .nav-tabs {
+            border-bottom: 0;
+        }
+
+        #_archivo.btn-info {
+            background-image: none;
+            color: inherit;
+            background-color: inherit !important;
+        }
+
+        .modal-dialog {
+            width: 300px;
+        }
+
+        .datepicker {
+            width: 200px;
+        }
+
+        .form-control {
+            font-size: 11px;
+            width: 100%;
+            height: 28px;
+        }
+
+        input[type="text"] {
+            font-size: 11px;
+        }
+
+        body {
+            font-size: 10.5px;
+            font-family: tahoma;
+        }
+
+        .label-primary {
+            background-color: #337ab7;
+            font-size: 11px;
+        }
+        .table {
+            width: 50% !important;
+        }
+
+    </style>
+}
+
+@section scripts{
+    <script type="text/javascript">
+
+
+        function soloNumeros(e) {
+            var key = window.Event ? e.which : e.keyCode
+            return (key >= 48 && key <= 57)
+        }
+
+        $(function () {
+            $('#id_fecha_asignacion').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'es',
+                autoclose: true
+            });
+        });
+        $(function () {
+            $('#_fecha').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'es',
+                autoclose: true
+            });
+        });
+
+        $(function () {
+            $('#_fechaEnvioMovil').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'es',
+                autoclose: true
+            });
+        });
+
+        var app = angular.module('MyApp', []).directive('onFinishRender', function ($timeout) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attr) {
+                    if (scope.$last === true) {
+                        $timeout(function () {
+                            scope.$emit('ngRepeatFinished');
+                        });
+                    }
+                }
+            }
+        }).directive('fileModel', ['$parse', function ($parse) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var model = $parse(attrs.fileModel);
+                    var modelSetter = model.assign;
+
+                    element.bind('change', function () {
+                        scope.$apply(function () {
+                            modelSetter(scope, element[0].files[0]);
+                        });
+                    });
+                }
+            };
+        }]);
+
+        app.service('fileUpload', ['$http', function ($http) {
+            this.uploadFileToUrl = function (idlocal, file, uploadUrl) {
+
+                var fd = new FormData();
+                fd.append('file', file);
+                fd.append('idlocal', idlocal);
+                $http.post(uploadUrl, fd, {
+
+                    transformRequest: angular.identity,
+                    headers: { 'Content-Type': undefined }
+                })
+                .success(function (data) {
+
+                })
+                .error(function () {
+
+                });
+
+            }
+        }]);
+
+        app.controller('MyController', function ($scope, $timeout, $http, fileUpload) {
+            oTable = null;
+
+            function MostrandoFechaSistemaActual() {
+                let fecha = new Date();
+                let ano = fecha.getFullYear();
+                let mes = fecha.getMonth();
+                const mesFormato = (mes + 1);
+      
+                $scope.id_anio = String(ano);
+                $scope.mesActual = String(mesFormato);
+            }
+
+            MostrandoFechaSistemaActual();
+
+
+            $scope.servicios = "0";
+            $scope.Lista_Enel_Temporal = [];
+
+            $scope.uploadFile_enel = function () {
+
+                var idlocal = document.getElementById('local').value;
+                var idServicio = document.getElementById('id_servicio').value;
+
+                var btn_Guardar = document.getElementById('btn_guardar');
+                var btn_ver = document.getElementById('btn_ver');
+                var idfechaAsignacion = document.getElementById('id_fecha_asignacion').value;
+                
+                const anio = document.getElementById('txtAnio').value;
+                const mes = document.getElementById('cboMes').value;
+
+                if (idlocal == "0") {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Por favor seleccione un Local. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+                if (idServicio == "0") {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Por favor seleccione un Servicio. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                if (anio == "0" || anio == "" || anio == null || anio == undefined ) {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Por favor ingrese un año. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+
+                if (idfechaAsignacion == '') {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Por favor seleccione o ingrese una Fecha de Asignación. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                if ($scope.myFile == null) {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Ningun Archivo Seleccionado',
+                        type: 'error'
+                    });
+                } else {
+ 
+                    $('.sige-load').show();
+                    var file = $scope.myFile;
+                    var uploadUrl = '@Url.Action("InsertaExcel_Enel")';
+
+                    var fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('idlocal', idlocal);
+                    fd.append('idfechaAsignacion', idfechaAsignacion);
+                    fd.append('idServicio', idServicio);
+
+                    fd.append('anio', anio);
+                    fd.append('mes', mes);
+
+                    $http.post(uploadUrl, fd,
+                    {
+                        transformRequest: angular.identity,
+                        headers: { 'Content-Type': undefined }
+                        }).success(function (res) {
+                            $('.sige-load').hide();
+                            if (res.ok == true) {
+                                console.log(res.data);
+                                btn_ver.disabled = true;
+                                btn_Guardar.disabled = false;
+
+                                $scope.Lista_Enel_Temporal = res.data;
+                            } else {
+                                btn_Guardar.disabled = true;
+                                alert(res.data);
+                            } 
+                    })
+                    .error(function () {
+                        alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+                        $('.sige-load').hide();
+                    });
+
+                }
+            };
+
+
+            ///Creando la Funcion
+            $scope.Listado_Servicios = function () {
+                var variables = {
+                    method: 'POST',
+                    url: 'ListadoServicios',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                }
+                $http(variables)
+                .success(function (data) {
+                    $scope.Obj_List_Servicios = [];
+                    for (obj of data) {
+                        if (obj._a ==10) {
+                            $scope.Obj_List_Servicios.push(obj);
+                        }
+                    }    
+
+                    setTimeout(function () {
+                        $('#id_servicio').val(10).trigger('change');
+                    }, 100);
+                })
+                .error(function () {
+                    alert('Ocurrio un problema con la conexion, vuelva a intentar.')
+
+                });
+            }
+
+            //inicializando
+            $scope.Listado_Servicios()
+
+            $scope.ListarTableTemporal = function () {
+
+                $http({
+
+                    method: 'POST',
+                    url: 'JsonListarTablaTemp',
+
+                    headers: {
+                        'Content-Type': undefined
+                    }
+
+                }).success(function (data) {
+
+                    $('.sige-load').hide();
+
+                    if (oTable == null) {
+                        $scope.listaTemp = data;
+
+                    } else {
+                        oTable.destroy();
+                        oTable = null;
+                        $scope.listaTemp = data;
+
+                    }
+
+
+                }).error(function () {
+
+                    alert('Ocurrio un problema, vuelva a intentar.')
+                });
+
+            }
+
+
+            $scope.Eliminando_Tabla_Temporal = function () {
+                var btn_ver = document.getElementById('btn_ver');
+                $window.location.reload();
+            }
+
+            ///guarda de la tabla temporal a la tabla real
+
+            $scope.Guardar_datosEnel = function () {
+
+                var cancel = document.getElementById('btn_cancel');
+                var btn_Guardar = document.getElementById('btn_guardar');
+                var Fecha_asignacion = document.getElementById('_fecha').value;
+                var idServicio = document.getElementById('id_servicio').value;
+
+                if (idServicio == '0') {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Por favor seleccione un Servicio. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+                if (Fecha_asignacion == '') {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Por favor seleccione o ingrese la Fecha.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                var params = {
+                    fechaAsignacion: Fecha_asignacion,
+                    id_servicio: document.getElementById('id_servicio').value,
+                    nombre_archivo: $scope.myFile.name
+                }
+
+                $('.sige-load').show();
+                $http({
+
+                    method: 'POST',
+                    url: 'set_grabarDatos_excelEnel',
+                    params: params,
+                    headers: {
+                        'Content-Type': undefined
+                    }
+
+                }).success(function (res) { 
+                    $('.sige-load').hide();
+                    if (res.ok == true) { 
+                       new PNotify({
+                            title: ' ',
+                            text: 'Proceso generado Exitosamente.',
+                            type: 'success'
+                        });
+                        btn_Guardar.disabled = true;
+                        cancel.click();
+                    } else {
+                        alert(res.data);
+                    } 
+                    //var res = data.split("|");
+                    //if (res[0] == '"0' || res[0] == '0' || res[0] == 0) {
+                    //    new PNotify({
+                    //        title: 'Sistemas',
+                    //        text: 'Lo sentimos se produjo un error, realice una captura de Pantalla con el Error y comuniquese con el area de Sistemas..',
+                    //        type: 'error'
+                    //    });
+
+                    //    alert(res[1])
+                    //    return;
+                    //}
+                    //else {
+                    //    new PNotify({
+                    //        title: ' ',
+                    //        text: 'Proceso generado Exitosamente.',
+                    //        type: 'success'
+                    //    });
+                    //}
+
+                    //btn_Guardar.disabled = true;
+                    //cancel.click();
+
+                }).error(function () {
+                    $('.sige-load').hide();
+                        new PNotify({
+                            title: 'Sistemas',
+                            text: 'Lo sentimos se produjo un error, realice una captura de Pantalla con el Error y comuniquese con el area de Sistemas..',
+                            type: 'error'
+                        });
+                });
+
+            }
+
+            // EXPORTAR A EXCEL
+            $scope.tableToExcel = function (tableId) {
+                var uri = 'data:application/vnd.ms-excel;base64,',
+                      template = '<html lang="es" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Importar</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+                      base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))); },
+                      format = function (s, c) { return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; }) };
+
+                var table = $(tableId),
+                             ctx = { worksheet: 'descar123', table: table.html() };
+
+                var link = document.createElement("a");
+                link.download = "ImportacionLecturas.xls";
+                link.href = uri + base64(format(template, ctx));
+                link.click()
+
+            }
+
+            $scope.dowload_file = function () {
+                window.open("../Formato/FORMATO_REPARTO_ENEL.xlsx");
+            }
+
+        });
+    </script>
+}
+
+<div ng-app="MyApp" ng-controller="MyController">
+
+
+    <div class="panel panel-oscuro">
+        <div class="panel-heading">
+            <h6><i class="fa fa-table fa-lg"></i> IMPORTAR ARCHIVOS DE EXCEL DE ENEL</h6>
+        </div>
+        <div class="panel-body">
+
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="col-sm-4 col-md-4 col-lg-4 ">
+                                <label style="width: 150px;" for="_usuario" class="col-sm-1 control-label">Local </label>
+                                <div>
+                                    <select class="form-control" id="local">
+                                        <option value="0" selected="selected">-- Seleccione --</option>
+                                        @foreach (Local oBj in new NLocal().NLista(new Request_Local_Select() { emp_id = ((Sesion)Session["Session_Usuario_Acceso"]).empresa.emp_id }))
+                                        {
+                                            <option value="@oBj.loc_id">@oBj.loc_nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-sm-4 col-md-4">
+                                <label style="width: 100px;" for="_usuario" class="col-sm-2 control-label">Servicio</label>
+                                <select class="form-control" id="id_servicio" ng-model="servicios">
+                                    <option value="0" selected="selected">-- Seleccione --</option>
+                                    <option ng-repeat="item in Obj_List_Servicios" value="{{item._a}}"> {{item._b}} </option>
+                                </select>
+                            </div>
+
+                            <div class="col-sm-4 col-md-4">
+                                <label style="width: 100px;" for="txtAnio" class="col-sm-2 control-label">Año </label>
+                                <br />
+                                <input class="form-control" id="txtAnio" onkeypress="return soloNumeros(event)" placeholder="Año" ng-model="id_anio" />
+                            </div>
+
+                        </div>
+                        <div class="col-md-5">
+                            <div class="col-sm-6 col-md-6">
+                                <label style="width: 100px;" for="cboMes" class="col-sm-2 control-label">Mes</label>
+                                <select class="form-control" id="cboMes" ng-model="mesActual">
+                                    <option value="1" selected="selected"> ENERO </option>
+                                    <option value="2"> FEBRERO </option>
+                                    <option value="3"> MARZO</option>
+                                    <option value="4"> ABRIL</option>
+                                    <option value="5"> MAYO</option>
+                                    <option value="6"> JUNIO</option>
+                                    <option value="7"> JULIO</option>
+                                    <option value="8"> AGOSTO</option>
+
+                                    <option value="9"> SETIEMBRE </option>
+                                    <option value="10"> OCTUBRE </option>
+                                    <option value="11"> NOVIEMBRE </option>
+                                    <option value="12"> DICIEMBRE </option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-md-6">
+                                <label style="width: 150px;" for="_usuario" class="control-label">Fecha Asignacion</label>
+                                <div style="width: 100px;">
+                                    <input class="form-control" id="id_fecha_asignacion" placeholder="dia/mes/año" type="text" value="@DateTime.Now.ToString("dd/MM/yyyy")" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+ 
+
+            <br />
+            <div class="row">
+
+                <div class="col-sm-4 col-md-6">
+                    <input type="file" class="filestyle" file-model="myFile" data-placeholder="Ningun Archivo Seleccionado" data-buttonname="btn-primary" data-size="sm" data-buttonbefore="true" data-buttontext="  Seleccionar Archivo..">
+                </div>
+
+                <div class="col-sm-8 col-md-6">
+                    <button id="btn_ver" type="button" class="btn btn-primary btn-sm" ng-click="uploadFile_enel()"><i class="fa fa-upload"></i> Ver archivo</button>
+                    <button id="btn_nueva" type="button" class="btn btn-primary btn-sm" onclick="window.location.reload(true)"><i class="fa fa-file-excel-o"></i> Nuevo</button>
+                    <button class="btn btn-info  btn-sm" ng-click="dowload_file()"><span class="glyphicon glyphicon-download-alt"></span> Formato</button>
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-lg-12">
+                    <fieldset class="fieldset-border">
+                        <legend>Leyenda de errores</legend>
+                        <span class="label label-primary">La hoja de Excel tiene que tener por nombre "Importar".</span>
+                        <span class="label label-primary">El archivo a subir debe tener todos los bordes definidos.</span>
+                    </fieldset>
+                </div>
+            </div>
+            <br />
+
+            <div class="form-group">
+                <div class="table-responsive" style="height:500px">
+                    <table id="tblLista" class="table  table-bordered table-responsive" cellspacing="0" width="100%">
+                        <thead style="background:#F0F3F5;">
+                            <tr>
+                                <th>Nro. Fila</th>
+                                <th>Sector</th>
+                                <th>Zona</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="item in Lista_Enel_Temporal">
+                                <td>{{$index + 1}}</td>
+                                <td>{{item.Sector}}</td>
+                                <td>{{item.zona}}</td>
+                                <td>{{item.total}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <hr />
+            <div class="form-group">
+                <div class="col-sm-12 col-md-offset-5" style=" padding-top: 20px; ">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Mantenimiento">
+                        <button id="btn_guardar" disabled="disabled" role="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-asignacion"><i class="fa fa-save fa-lg"></i> Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="modal-asignacion" class="modal fade" role="dialog" tabindex="-1" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog">
+            <div class="panel panel-oscuro">
+                <div class="panel-heading">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h6 class="modal-title"><i class="fa fa-calendar fa-lg"></i> INGRESE LA FECHA DE ENVIO A MÓVIL</h6>
+                </div>
+                <div class="panel-body">
+                    <div class="form-horizontal">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group form-group-sm">
+                                    <label for="_usuario" class="col-sm-4 control-label">Fecha</label>
+                                    <div class="col-sm-8">
+                                        <input class="form-control" id="_fecha" placeholder="dia/mes/año" type="text" value="@DateTime.Now.ToString("dd/MM/yyyy")" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Mantenimiento" style="float: right;">
+
+                                <button role="button" class="btn btn-primary" ng-click="Guardar_datosEnel()"><i class="fa fa-save fa-lg"></i> Guardar</button>
+                                <button id="btn_cancel" role="button" class="btn btn-default" data-dismiss="modal"><i class="fa fa-close fa-lg"></i> Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+ 

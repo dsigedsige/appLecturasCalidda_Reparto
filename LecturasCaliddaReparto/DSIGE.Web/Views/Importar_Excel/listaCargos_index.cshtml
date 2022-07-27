@@ -1,0 +1,891 @@
+﻿ 
+
+@{
+    ViewBag.Title = ".:: Listado de Cargos ::.";
+    Layout = "~/Views/Shared/_LayoutPrincipal.cshtml";
+}
+
+@section instances{
+    @Styles.Render("~/Content/dataTables-bootstrap/css/dataTables.bootstrap.min.css")
+        @Scripts.Render("~/Content/dataTables-bootstrap/js/jquery.dataTables.min.js")
+        @Scripts.Render("~/Content/dataTables-bootstrap/js/dataTables.bootstrap.min.js")
+
+        @Styles.Render("~/Content/bootstrap-datepicker/css/bootstrap-datepicker.min.css")
+        @Scripts.Render("~/Content/bootstrap-datepicker/js/bootstrap-datepicker.min.js")
+        @Scripts.Render("~/Content/bootstrap-datepicker/locales/bootstrap-datepicker.es.min.js")
+
+        @Scripts.Render("~/Content/bootstrap/js/bootstrap-filestyle.min.js")
+        @Scripts.Render("~/Scripts/jquery.fileDownload.js")
+        @Scripts.Render("~/Content/angular/angular.js")
+        <script src="~/Content/pdf/jspdf.js"></script>
+ 
+
+}
+
+@section styles{
+    <style type="text/css">
+        .nav-tabs {
+            border-bottom: 0;
+        }
+
+        #_archivo.btn-info {
+            background-image: none;
+            color: inherit;
+            background-color: inherit !important;
+        }
+
+        .modal-dialog {
+            width: 300px;
+        }
+
+        .datepicker {
+            width: 200px;
+        }
+
+        .form-control {
+            font-size: 11px;
+            width: 100%;
+            height: 28px;
+        }
+
+        input[type="text"] {
+            font-size: 11px;
+        }
+
+        body {
+            font-size: 10.5px;
+            font-family: tahoma;
+        }
+
+        .label-primary {
+            background-color: #337ab7;
+            font-size: 11px;
+        }
+
+
+
+        input[type=checkbox], input[type=radio] {
+            margin: 1px 0 0;
+        }
+
+        table td:first-child {
+            width: 20px;
+        }
+    </style>
+}
+
+@section scripts{
+    <script type="text/javascript">
+
+
+        function soloNumeros(e) {
+            var key = window.Event ? e.which : e.keyCode
+            return (key >= 48 && key <= 57)
+        }
+
+
+        $(function () {
+            $('#_fecha').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'es',
+                autoclose: true
+            });
+        });
+
+        $(function () {
+            $('#_fechaEnvioMovil').datepicker({
+                format: 'dd/mm/yyyy',
+                language: 'es',
+                autoclose: true
+            });
+        });
+
+        var app = angular.module('MyApp', []).directive('onFinishRender', function ($timeout) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attr) {
+                    if (scope.$last === true) {
+                        $timeout(function () {
+                            scope.$emit('ngRepeatFinished');
+                        });
+                    }
+                }
+            }
+        }).directive('fileModel', ['$parse', function ($parse) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var model = $parse(attrs.fileModel);
+                    var modelSetter = model.assign;
+
+                    element.bind('change', function () {
+                        scope.$apply(function () {
+                            modelSetter(scope, element[0].files[0]);
+                        });
+                    });
+                }
+            };
+        }]);
+
+        app.service('fileUpload', ['$http', function ($http) {
+            this.uploadFileToUrl = function (idlocal, file, uploadUrl) {
+
+                var fd = new FormData();
+                fd.append('file', file);
+                fd.append('idlocal', idlocal);
+                $http.post(uploadUrl, fd, {
+
+                    transformRequest: angular.identity,
+                    headers: { 'Content-Type': undefined }
+                })
+                    .success(function (data) {
+
+                    })
+                    .error(function () {
+
+                    });
+
+            }
+        }]);
+
+        app.controller('MyController', function ($scope, $timeout, $http, fileUpload) {
+            oTable = null;
+
+            $(document).ready(function () {
+                var map = null;
+                var myMarker;
+                var myLatlng;
+            });
+
+
+            function initializeGMap(lat, lng) {
+                myLatlng = new google.maps.LatLng(lat, lng);
+
+                var myOptions = {
+                    zoom: 12,
+                    zoomControl: true,
+                    center: myLatlng,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+
+                map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+                myMarker = new google.maps.Marker({
+                    position: myLatlng
+                });
+                myMarker.setMap(map);
+            }
+
+
+            // Re-init map before show modal
+            $('#modalUbicacion').on('show.bs.modal', function (event) {
+                ///
+                initializeGMap($scope.Latitud_Global, $scope.Longitud_Global);
+                $("#location-map").css("width", "100%");
+                $("#map_canvas").css("width", "100%");
+            });
+
+            // Trigger map resize event after modal shown
+            $('#modalUbicacion').on('shown.bs.modal', function () {
+                google.maps.event.trigger(map, "resize");
+                map.setCenter(myLatlng);
+            });
+
+
+            function MostrandoFechaSistemaActual() {
+                let fecha = new Date();
+                let ano = fecha.getFullYear();
+                let mes = fecha.getMonth();
+                const mesFormato = (mes + 1);
+
+                $scope.id_anio = String(ano);
+                $scope.mesActual = String(mesFormato);
+            }
+
+            MostrandoFechaSistemaActual();
+            $scope.servicios = "0";
+
+            $scope.ListaSector = [];
+            $scope.listando_Sectores = function () {
+                $('.sige-load').show();
+                var variables = {
+                    method: 'POST',
+                    url: '../ResultadosLectura/ListandoSector',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    }
+                }
+                $http(variables)
+                    .success(function (data) {
+                        $('.sige-load').hide();
+                        $scope.ListaSector = data;
+                        setTimeout(function () {
+                            $('#cbo_supervisor').val(0).trigger('change');
+                        }, 200);
+                    })
+                    .error(function () {
+                        $('.sige-load').hide();
+                        alert('Lo sentimos, Ocurrio un problema, vuelva a intentar.')
+                    });
+            };
+            $scope.listando_Sectores();
+
+
+            ///guarda de la tabla temporal a la tabla real
+
+            $scope.barraProgreso = '1%';
+
+            $scope.listaCargos = [];
+            $scope.MostrarInformacion = function () {
+                const anio = document.getElementById('txtAnio').value;
+                const mes = document.getElementById('cboMes').value;
+                const sector = document.getElementById('cbo_sector').value;
+                const cargoUno = document.getElementById('rb_recibo');
+
+
+                const tipoCargo = cargoUno.checked == true ? 1 : 2;
+
+                if (anio == "0" || anio == "" || anio == null || anio == undefined) {
+                    new PNotify({
+                        title: ' ',
+                        text: 'Por favor ingrese un año. Muchas gracias.',
+                        type: 'error'
+                    });
+                    return;
+                }
+                //if (sector == "0" || sector == "" || sector == null || sector == undefined) {
+                //    new PNotify({
+                //        title: ' ',
+                //        text: 'Por favor seleccione un Sector. Muchas gracias.',
+                //        type: 'error'
+                //    });
+                //    return;
+                //}
+
+                $scope.barraProgreso = '0%';
+                var params = {
+                    anio: anio,
+                    mes: mes,
+                    sector: sector,
+                    tipoCargo: tipoCargo
+                }
+
+                $('.sige-load').show();
+                $http({
+
+                    method: 'POST',
+                    url: '../Importar_Excel/get_datosCargos',
+                    params: params,
+                    headers: {
+                        'Content-Type': undefined
+                    }
+
+                }).success(function (res) {
+                    $('.sige-load').hide();
+
+                    $scope.listaCargos = [];
+                    if (res.ok == true) {
+                        $scope.listaCargos = res.data;
+                        $scope.checkedAll = false;
+                    } else {
+                        alert(res.data);
+                    }
+                }).error(function () {
+                    $('.sige-load').hide();
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Lo sentimos se produjo un error, realice una captura de Pantalla con el Error y comuniquese con el area de Sistemas..',
+                        type: 'error'
+                    });
+                });
+
+            }
+
+            // EXPORTAR A EXCEL
+            $scope.tableToExcel = function (tableId) {
+                var uri = 'data:application/vnd.ms-excel;base64,',
+                    template = '<html lang="es" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Importar</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+                    base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))); },
+                    format = function (s, c) { return s.replace(/{(\w+)}/g, function (m, p) { return c[p]; }) };
+
+                var table = $(tableId),
+                    ctx = { worksheet: 'descar123', table: table.html() };
+
+                var link = document.createElement("a");
+                link.download = "ImportacionLecturas.xls";
+                link.href = uri + base64(format(template, ctx));
+                link.click()
+
+            }
+
+            $scope.dowload_file = function () {
+                window.open("../Formato/FORMATO_REPARTO_ENEL.xlsx");
+            }
+
+
+            // METODO PARA CHEKED ALL
+            $scope.checkedAll = false;
+            $scope.checkedAllCargos = function (checked) {
+                if (checked) {
+                    angular.forEach($scope.listaCargos, function (child) {
+                        child.checkeado = true;
+                    })
+                } else {
+                    angular.forEach($scope.listaCargos, function (child) {
+                        child.checkeado = false;
+                    })
+                }
+            }
+
+
+            $scope.Latitud_Global = "";
+            $scope.Longitud_Global = "";
+            $scope.Suministro_Global = "";
+
+            $scope.abrirModal_ubicacion = function ({ suministro, latitud, longitud }) {
+                if (latitud.length == 0) {
+                    new PNotify({
+                        title: ' ',
+                        text: 'No se cargó la informacion de la latitud.',
+                        type: 'error'
+                    });
+                    return;
+                }
+                if (longitud.length == 0) {
+                    new PNotify({
+                        title: ' ',
+                        text: 'No se cargó la informacion de la longitud.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                $scope.Latitud_Global = latitud;
+                $scope.Longitud_Global = longitud;
+                $scope.Suministro_Global = suministro;
+
+                $('#modalUbicacion').modal({ show: 'false' });
+            }
+
+            $scope.descargarFoto = function ({ idCargo }) {
+                $('.sige-load').show();
+                var variables = {
+                    method: 'POST',
+                    url: '../LecturaEnviarCliente/set_descargarFotosCargos',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    data: {
+                        id_cargo: idCargo
+                    }
+                }
+                $http(variables)
+                    .success(function (res) {
+                        $('.sige-load').hide();
+
+                        if (res.ok) {
+                            window.open(res.data, '_blank');
+                        } else {
+                            new PNotify({
+                                title: ' ',
+                                text: res.data,
+                                type: 'error'
+                            });
+                        }
+
+
+                    }).error(function () {
+                        alert('Lo sentimos, Ocurrio un problema, vuelva a intentar.')
+                    });
+            }
+
+            function MarcoCheck() {
+                let flag_marco = false;
+                for (var i = 0; i < $scope.listaCargos.length; i++) {
+                    if ($scope.listaCargos[i].checkeado == true) {
+                        flag_marco = true;
+                        break;
+                    }
+                }
+                return flag_marco;
+            }
+
+            $scope.descargarFormatoCargos = function () {
+                const flag_marco = MarcoCheck();
+                if (flag_marco == false) {
+                    new PNotify({
+                        title: 'Sistemas',
+                        text: 'Por favor seleccione al menos un registro.',
+                        type: 'error'
+                    });
+                    return;
+                }
+
+                let ListaData = [];
+                for (var i = 0; i < $scope.listaCargos.length; i++) {
+                    if ($scope.listaCargos[i].checkeado == true) {
+                        ListaData.push($scope.listaCargos[i].idCargo);
+                    }
+                }
+
+                const cargoUno = document.getElementById('rb_recibo');
+                const tipoCargo = cargoUno.checked == true ? 1 : 2;
+
+                $('.sige-load').show();
+                var variables = {
+                    method: 'POST',
+                    url: '../Importar_Excel/get_datosCargosPDF',
+                    headers: {
+                        'Content-Type': 'application/json; charset=utf-8'
+                    },
+                    data: {
+                        idscargo: String(ListaData),
+                        tipoCargo: tipoCargo
+                    }
+                }
+                $http(variables)
+                    .success(function (res) {
+                        $('.sige-load').hide();
+
+                        if (res.ok) {
+                            if (res.data.length > 0) {
+
+                                $scope.barraProgreso = '0%';
+
+                                if (tipoCargo == 1) {
+                                    $scope.getPdf_cargoRecibo(res.data);
+                                } else {
+                                    $scope.getPdf_cargo_Varios_Recibo(res.data);
+                                }
+                            }
+                        } else {
+                            new PNotify({
+                                title: ' ',
+                                text: res.data,
+                                type: 'error'
+                            });
+                        }
+
+
+                    }).error(function () {
+                        alert('Lo sentimos, Ocurrio un problema, vuelva a intentar.')
+                    });
+            }
+
+            $scope.getPdf_cargoRecibo = async (obj_data) => {
+                //var doc = new jsPDF();
+                var altura = 10;
+                let splitTitle = "";
+
+                const generarReporte = (index) => {
+                    return new Promise((resolved, rejected) => {
+                        var doc = new jsPDF();
+                        altura = 10;
+                        splitTitle = "";
+
+                        const cuerpoReporte = function () {
+                            doc.setFontSize(20);
+                            doc.setFont("courier");
+                            doc.setFontType("bold");
+
+                            doc.rect(3, altura - 4, 204, 20);
+                            doc.text(50, 18, obj_data[index].tituloReporte);
+                            doc.setFontType("normal");
+
+                            altura = 30;
+                            doc.setFontSize(10);
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'NUMERO DE SUMINISTRO: '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].numeroSuministro));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'MES FACTURADO: '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].mesFacturado));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'NOMBRE Y APELLIDOS: '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].nombreApellido));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'DNI: '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].dni));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 12);
+                            doc.text(5, altura, 'FIRMA DEL CLIENTE: '); doc.rect(55, altura - 4, 152, 12);
+                            altura += 12;
+
+                            doc.rect(3, altura - 4, 52, 15);
+                            doc.text(5, altura, 'DESCRIPCION DEL PREDIO: ');
+                            doc.rect(55, altura - 4, 152, 15);
+                            splitTitle = doc.splitTextToSize(String(obj_data[index].descripcionPredio), 140);
+                            doc.text(60, altura, splitTitle);
+                            altura += 15;
+
+                            doc.rect(3, altura - 4, 52, 12);
+                            doc.text(5, altura, 'LECTURA DEL MEDIDOR: ');
+                            doc.setFontSize(8);
+                            doc.text(5, altura + 5, '(No para el caso de postales)');
+                            doc.setFontSize(10);
+
+                            doc.rect(55, altura - 4, 152, 12);
+                            splitTitle = doc.splitTextToSize(String(obj_data[index].lecturaMedidor), 140);
+                            doc.text(60, altura, splitTitle);
+                            altura += 12;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'FECHA: '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].fecha));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'HORA: '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].hora));
+
+                            //var string = doc.output('datauristring');
+                            //var iframe = "<iframe width='100%' height='100%' src='" + string + "'></iframe>";
+                            //var x = window.open();
+                            //x.document.open();
+                            //x.document.write(iframe);
+                            //x.document.close();
+
+                            doc.save(String(obj_data[index].nombreArchivo)); 
+                            resolved('true');
+                        }
+                        ////-------
+                        // var imgDataLogo = String('../Content/Imagen/firma/logoCobra.png');
+                        const imgDataLogo = String(obj_data[index].firmaCliente);
+                        let imgL = new Image;
+                        imgL.onload = function () {
+                            doc.addImage(this, 'JPEG', 60, 50, 60, 12);
+                            cuerpoReporte();
+                        };
+                        imgL.crossOrigin = "";
+                        imgL.src = imgDataLogo;  // some random imgur image
+                    })
+                }
+
+                let barra = (100 / obj_data.length);
+
+                for (let index = 0; index < obj_data.length; index++) {             
+                    try {
+                        const resp = await generarReporte(index);  
+
+                        const porc = Math.round(((index + 1) * barra));
+                        $scope.barraProgreso = porc + '%';
+                        $scope.$apply();
+                    } catch (e) {
+                        const porc = Math.round(((index + 1) * barra));
+                        $scope.barraProgreso = porc + '%';
+                        $scope.$apply();
+                        continue;
+                    }
+                }
+            }
+
+            $scope.getPdf_cargo_Varios_Recibo = async (obj_data) => {
+                //var doc = new jsPDF();
+                var altura = 10;
+                let splitTitle = "";
+                let codigoCargo = 0;
+
+                const generarReporte2 = (index) => {  
+                    return new Promise((resolved, rejected) => {
+                        var doc = new jsPDF();
+                        altura = 10;
+                        splitTitle = "";
+
+                        const cuerpoReporte = function () {
+
+                            doc.setFontSize(20);
+                            doc.setFont("courier");
+                            doc.setFontType("bold");
+
+                            doc.rect(3, altura - 4, 204, 20);
+                            doc.text(48, 18, obj_data[index].tituloReporte);
+                            doc.setFontType("normal");
+
+                            altura = 30;
+                            doc.setFontSize(10);
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'MES FACTURADO '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].mesFacturado));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, '¿ QUIEN RECIBE ? '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].quienRecibe));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 12);
+                            doc.text(5, altura, 'NOMBRE DE LA EMPRESA ');
+                            doc.setFontSize(8);
+                            doc.text(5, altura + 5, 'CONDOMINIO / AGRUPACION');
+                            doc.setFontSize(10);
+
+                            doc.rect(55, altura - 4, 152, 12);
+                            splitTitle = doc.splitTextToSize(String(obj_data[index].nombreEmpresa), 140);
+                            doc.text(60, altura, splitTitle);
+                            altura += 12;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'NOMBRE Y APELLIDOS '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].nombreApellido));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'DNI '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].dni));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 12);
+                            doc.text(5, altura, 'FIRMA '); doc.rect(55, altura - 4, 152, 12);
+                            altura += 12;
+
+                            let cantRelacionSum = 1;
+
+                            // obtneniendo los registros de los suministros por  cada Cargo ----
+                            const listaSuministros = obj_data.filter((rec) => rec.idCargo == codigoCargo).map((res) => res.relacionSuministros);
+
+                            for (suministros of listaSuministros) {
+                                cantRelacionSum += 1;
+                            } 
+
+                            let alturaRec = (cantRelacionSum * 6);
+
+                            doc.rect(3, altura - 4, 52, alturaRec);
+                            doc.text(5, altura, 'RELACION DE SUMINISTROS ');
+                            doc.rect(55, altura - 4, 152, alturaRec);
+
+                            //// imprimiendo los registros de los suministros por  cada Cargo ----
+                            for (suministros of listaSuministros) { 
+                                doc.text(60, altura, String(suministros));
+                                altura += 6;
+                            } 
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'FECHA '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].fecha));
+                            altura += 6;
+
+                            doc.rect(3, altura - 4, 52, 6);
+                            doc.text(5, altura, 'HORA '); doc.rect(55, altura - 4, 152, 6); doc.text(60, altura, String(obj_data[index].hora));
+
+                            //var string = doc.output('datauristring');
+                            //var iframe = "<iframe width='100%' height='100%' src='" + string + "'></iframe>";
+                            //var x = window.open();
+                            //x.document.open();
+                            //x.document.write(iframe);
+                            //x.document.close();
+
+                            doc.save(String(obj_data[index].nombreArchivo)); 
+                            resolved('true');
+                        }
+                        ////-------
+                        // var imgDataLogo = String('../Content/Imagen/firma/logoCobra.png');
+                        const imgDataLogo = String(obj_data[index].firma);
+                        let imgL = new Image;
+                        imgL.onload = function () {
+                            doc.addImage(this, 'JPEG', 60, 62, 60, 12);
+                            cuerpoReporte();
+                        };
+                        imgL.crossOrigin = "";
+                        imgL.src = imgDataLogo;  // some random imgur image
+                    })
+                }
+
+                let cant = 0;
+                for (let index = 0; index < obj_data.length; index++) {
+                    if (codigoCargo != obj_data[index].idCargo) {
+                        cant += 1;
+                    }
+                }
+                let barra = (100 / cant);
+
+                codigoCargo = 0;
+                for (let index = 0; index < obj_data.length; index++) {
+                    //-----Agrupando por que en los datos viene detallado los suministros ---
+                    if ( codigoCargo != obj_data[index].idCargo) {
+                        codigoCargo = obj_data[index].idCargo;
+                        try {
+                            const resp = await generarReporte2(index);
+
+                            const porc = Math.round(((index + 1) * barra));
+                            $scope.barraProgreso = porc + '%';
+                            $scope.$apply();
+                        } catch (e) {
+
+                            const porc = Math.round(((index + 1) * barra));
+                            $scope.barraProgreso = porc + '%';
+                            $scope.$apply();
+                            continue;
+                        }
+                    }
+                }
+
+            }
+
+            $scope.changeTipoRecibo = () => {
+                $scope.barraProgreso = '0%';
+                $scope.listaCargos = [];
+            }
+
+    
+
+        });
+    </script>
+}
+
+<div ng-app="MyApp" ng-controller="MyController">
+
+    <div class="panel panel-oscuro" style="margin-top: -10px;">
+        <div class="panel-heading">
+            <h6><i class="fa fa-table fa-lg"></i> LISTADO DE CARGOS </h6>
+        </div>
+        <div class="panel-body">
+
+            <div class="well" style="background: #314b75; color: white;margin-bottom: 2px;margin-top: -10px;">
+                
+                <div class="row" style="    margin-top: -5px;">
+                    <div class="col-md-12">
+                        <div class="col-sm-4 col-md-2">
+                            <label style="width: 100px;" for="txtAnio" class="  control-label">Año </label>
+                            <br />
+                            <input class="form-control" id="txtAnio" onkeypress="return soloNumeros(event)" placeholder="Año" ng-model="id_anio" />
+                        </div>
+
+                        <div class="col-sm-4 col-md-2">
+                            <label style="width: 100px;" for="cboMes" class="  control-label">Mes Facturacion</label>
+                            <select class="form-control" id="cboMes" ng-model="mesActual">
+                                <option value="1" selected="selected"> ENERO </option>
+                                <option value="2"> FEBRERO </option>
+                                <option value="3"> MARZO</option>
+                                <option value="4"> ABRIL</option>
+                                <option value="5"> MAYO</option>
+                                <option value="6"> JUNIO</option>
+                                <option value="7"> JULIO</option>
+                                <option value="8"> AGOSTO</option>
+
+                                <option value="9"> SETIEMBRE </option>
+                                <option value="10"> OCTUBRE </option>
+                                <option value="11"> NOVIEMBRE </option>
+                                <option value="12"> DICIEMBRE </option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-4 col-md-2">
+                            <label for="cbo_sector" class="control-label">Sector</label>
+                            <select id="cbo_sector" class="form-control">
+                                <option value=0> [ --- TODOS --- ] </option>
+                                <option ng-repeat="item in ListaSector" value="{{item.id_Sector}}">
+                                    {{item.nombre_Sector}}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-sm-12 col-md-6 col-lg-6">
+                            <div class="text-center">
+                                <br />
+                                <label class="radio-inline"><input type="radio" id="rb_recibo" name="optradio" checked ng-click="changeTipoRecibo()">  Cargo de Recepcion de recibos de enel</label>
+                                <label class="radio-inline"><input type="radio" id="rb_variosRecibo" name="optradio" ng-click="changeTipoRecibo()"> Cargo de Recepcion de varios recibos  </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="text-center" style="margin-top: 5px; margin-bottom: -5px;">                                                  
+                            <button class="btn btn-sm  btn-primary" style=" font-size: 14px;" ng-click="MostrarInformacion();"><span class="glyphicon glyphicon-refresh"></span> Mostrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br />            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="progress" style="margin-top: 6px;">
+                        <div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" ng-style="{width:barraProgreso}">
+                            {{ barraProgreso }} 
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2"  ng-if="listaCargos.length > 0" >
+                    <div class="form-group" style="text-align:left">
+                        <button class="btn btn-sm  btn-success" ng-click="descargarFormatoCargos();"><span class="glyphicon glyphicon-book"></span> Generar Cargo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <div class="table-responsive" style="height:500px">
+                                <table id="tblLista" class="table  table-bordered table-responsive" cellspacing="0" width="100%">
+                                    <thead style="background:#F0F3F5;">
+                                        <tr>
+                                            <th>
+                                                <div class="checkbox clip-check check-danger checkbox-inline" style=" margin-bottom: -5px;" ng-if="listaCargos.length > 0">
+                                                    <input type="checkbox" id="checkboxAll" value="1" ng-model="checkedAll" ng-click="checkedAllCargos(checkedAll)">
+                                                    <label for="checkboxAll">
+                                                    </label>
+                                                </div>
+                                            </th>
+                                            <th>Suministro</th>
+                                            <th class="text-center">Ubicacion</th>
+                                            <th class="text-center">Fotos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr ng-repeat="item in listaCargos">
+                                            <td>
+                                                <div class="checkbox clip-check check-primary checkbox-inline" style="margin-top: -19px;">
+                                                    <input type="checkbox" id="checkbox{{$index}}" value="true" ng-model="item.checkeado">
+                                                </div>
+                                            </td>
+                                            <td>{{item.suministro}}</td>
+                                            <td class="text-center">
+                                                <i class="fa fa-map-marker" style="color:red ; font-size: 19px; cursor:pointer" title="Mostrar la ubicacion" ng-click="abrirModal_ubicacion(item)"> </i>
+                                            </td>
+                                            <td class="text-center">
+                                                <i class="fa fa-camera" style="color:#04c ; font-size: 16px; cursor:pointer" title="Descargar foto" ng-click="descargarFoto(item)"></i>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+ 
+
+         </div>
+    </div>
+
+            <div id="modalUbicacion" class="modal fade" role="dialog" tabindex="-1" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-lg" style="width:60%" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title" id="myModalLabel">Ubicacion del suministro</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-12 modal_body_content">
+                                    <h1>Suministro: <small> {{Suministro_Global}} </small> </h1>
+                                </div>
+                            </div>
+                            <hr />
+                            <div class="row">
+                                <div class="col-md-12 modal_body_map">
+                                    <div class="location-map" id="location-map">
+                                        <div style="width: 800px; height: 400px;" id="map_canvas"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+
